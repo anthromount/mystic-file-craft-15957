@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { mockFishingZones } from '@/lib/mockData';
 import InteractiveMap from '@/components/map/InteractiveMap';
+import { MapboxTokenInput, useMapboxToken } from '@/components/map/MapboxConfig';
 import { useState } from 'react';
 
 
@@ -43,6 +44,7 @@ const statusStyles = {
 };
 
 export default function MapView() {
+  const { token } = useMapboxToken();
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
 
   return (
@@ -58,14 +60,20 @@ export default function MapView() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
-          <InteractiveMap 
-            zones={mockFishingZones}
-            onZoneClick={setSelectedZone}
-            selectedZoneId={selectedZone}
-            height="320px"
-          />
-        </div>
+        {!token ? (
+          <div className="mb-4">
+            <MapboxTokenInput />
+          </div>
+        ) : (
+          <div className="mb-4">
+            <InteractiveMap 
+              zones={mockFishingZones}
+              onZoneClick={setSelectedZone}
+              selectedZoneId={selectedZone}
+              height="320px"
+            />
+          </div>
+        )}
 
         {/* Zone Details */}
         <div className="space-y-3">

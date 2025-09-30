@@ -1,19 +1,8 @@
-import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { FishingZone } from '@/lib/mockData';
-
-// Fix for default marker icons in Leaflet
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
+import { useMapboxToken } from './MapboxConfig';
 
 interface InteractiveMapProps {
   zones: FishingZone[];
@@ -23,13 +12,6 @@ interface InteractiveMapProps {
   height?: string;
 }
 
-const statusColors = {
-  optimal: '#22c55e',
-  good: '#0ea5e9',
-  poor: '#f59e0b',
-  restricted: '#ef4444'
-};
-
 const InteractiveMap = ({ 
   zones, 
   onZoneClick, 
@@ -37,114 +19,149 @@ const InteractiveMap = ({
   showCatchPoints = false,
   height = '400px'
 }: InteractiveMapProps) => {
+  const { token } = useMapboxToken();
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<L.Map | null>(null);
-  const layersRef = useRef<Map<string, L.Polygon | L.Circle | L.Marker>>(new Map());
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!token || !mapContainer.current || map.current) return;
 
-    // Initialize map centered on Virac, Catanduanes
-    map.current = L.map(mapContainer.current).setView([13.5827, 124.2337], 11);
+    mapboxgl.accessToken = token;
+    
+    // Center on Virac, Catanduanes
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
+      center: [124.2337, 13.5827], // Virac coordinates
+      zoom: 11.5,
+      pitch: 45,
+    });
 
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map.current);
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
+
+    map.current.on('load', () => {
+      setMapLoaded(true);
+    });
 
     return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
+      map.current?.remove();
+      map.current = null;
     };
-  }, []);
+  }, [token]);
 
+  // Add fishing zones
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !mapLoaded) return;
 
-    // Clear existing layers
-    layersRef.current.forEach(layer => layer.remove());
-    layersRef.current.clear();
-
-    // Add zones to map
-    zones.forEach(zone => {
-      if (!map.current) return;
-
-      const color = statusColors[zone.status];
-      const isSelected = selectedZoneId === zone.id;
-
-      // Create polygon if boundary exists, otherwise use circle
-      if (zone.boundary && zone.boundary.length > 0) {
-        const polygon = L.polygon(
-          zone.boundary.map(p => [p.lat, p.lng] as [number, number]),
-          {
-            color: color,
-            fillColor: color,
-            fillOpacity: isSelected ? 0.4 : 0.2,
-            weight: isSelected ? 3 : 2,
-            dashArray: zone.status === 'restricted' ? '5, 5' : undefined
-          }
-        ).addTo(map.current);
-
-        polygon.on('click', () => {
-          if (onZoneClick) {
-            onZoneClick(zone.id);
-          }
-        });
-
-        layersRef.current.set(`polygon-${zone.id}`, polygon);
-      } else {
-        // Fallback to circle if no boundary
-        const circle = L.circle([zone.coordinates.lat, zone.coordinates.lng], {
-          color: color,
-          fillColor: color,
-          fillOpacity: isSelected ? 0.4 : 0.2,
-          radius: 2000,
-          weight: isSelected ? 3 : 2,
-        }).addTo(map.current);
-
-        circle.on('click', () => {
-          if (onZoneClick) {
-            onZoneClick(zone.id);
-          }
-        });
-
-        layersRef.current.set(`circle-${zone.id}`, circle);
+    zones.forEach((zone) => {
+      const zoneId = `zone-${zone.id}`;
+      
+      // Remove existing source and layers
+      if (map.current!.getLayer(zoneId)) {
+        map.current!.removeLayer(zoneId);
+      }
+      if (map.current!.getLayer(`${zoneId}-outline`)) {
+        map.current!.removeLayer(`${zoneId}-outline`);
+      }
+      if (map.current!.getSource(zoneId)) {
+        map.current!.removeSource(zoneId);
       }
 
-      // Add marker for zone center
-      const marker = L.marker([zone.coordinates.lat, zone.coordinates.lng])
-        .addTo(map.current)
-        .bindPopup(`
-          <div style="padding: 8px; font-family: system-ui, -apple-system, sans-serif;">
-            <strong style="font-size: 14px; color: ${color};">${zone.name}</strong><br/>
-            <span style="font-size: 12px; color: #666;">Status: ${zone.status}</span><br/>
-            ${zone.avgCatchRate > 0 ? 
-              `<span style="font-size: 12px; color: #666;">Avg: ${zone.avgCatchRate} kg/trip</span>` : 
-              `<span style="font-size: 12px; color: #ef4444;">Restricted Area</span>`
-            }
-          </div>
-        `);
-
-      marker.on('click', () => {
-        if (onZoneClick) {
-          onZoneClick(zone.id);
+      // Add zone polygon
+      map.current!.addSource(zoneId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {
+            id: zone.id,
+            name: zone.name,
+            status: zone.status,
+            avgCatchRate: zone.avgCatchRate
+          },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[...zone.boundary.map(p => [p.lng, p.lat]), [zone.boundary[0].lng, zone.boundary[0].lat]]]
+          }
         }
       });
 
-      layersRef.current.set(`marker-${zone.id}`, marker);
-    });
-  }, [zones, onZoneClick, selectedZoneId]);
+      // Zone fill color based on status
+      const fillColor = 
+        zone.status === 'optimal' ? '#22c55e' :
+        zone.status === 'good' ? '#0ea5e9' :
+        zone.status === 'poor' ? '#f59e0b' :
+        '#ef4444';
 
-  return (
-    <div 
-      ref={mapContainer} 
-      style={{ height, width: '100%' }} 
-      className="rounded-lg overflow-hidden border border-border"
-    />
-  );
+      map.current!.addLayer({
+        id: zoneId,
+        type: 'fill',
+        source: zoneId,
+        paint: {
+          'fill-color': fillColor,
+          'fill-opacity': selectedZoneId === zone.id ? 0.4 : 0.2
+        }
+      });
+
+      map.current!.addLayer({
+        id: `${zoneId}-outline`,
+        type: 'line',
+        source: zoneId,
+        paint: {
+          'line-color': fillColor,
+          'line-width': selectedZoneId === zone.id ? 3 : 2,
+          'line-dasharray': zone.status === 'restricted' ? [2, 2] : [1]
+        }
+      });
+
+      // Add click handler
+      map.current!.on('click', zoneId, () => {
+        onZoneClick?.(zone.id);
+      });
+
+      map.current!.on('mouseenter', zoneId, () => {
+        map.current!.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.current!.on('mouseleave', zoneId, () => {
+        map.current!.getCanvas().style.cursor = '';
+      });
+
+      // Add marker for zone center
+      const markerEl = document.createElement('div');
+      markerEl.className = 'mapbox-zone-marker';
+      markerEl.style.width = '12px';
+      markerEl.style.height = '12px';
+      markerEl.style.borderRadius = '50%';
+      markerEl.style.backgroundColor = fillColor;
+      markerEl.style.border = '2px solid white';
+      markerEl.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+      markerEl.style.cursor = 'pointer';
+
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+        `<div style="padding: 8px;">
+          <strong style="font-size: 14px;">${zone.name}</strong><br/>
+          <span style="font-size: 12px; color: #666;">Status: ${zone.status}</span><br/>
+          ${zone.avgCatchRate > 0 ? 
+            `<span style="font-size: 12px; color: #666;">Avg: ${zone.avgCatchRate} kg/trip</span>` : 
+            `<span style="font-size: 12px; color: #ef4444;">Restricted Area</span>`
+          }
+        </div>`
+      );
+
+      new mapboxgl.Marker(markerEl)
+        .setLngLat([zone.coordinates.lng, zone.coordinates.lat])
+        .setPopup(popup)
+        .addTo(map.current!);
+    });
+  }, [zones, mapLoaded, selectedZoneId, onZoneClick]);
+
+  if (!token) {
+    return null;
+  }
+
+  return <div ref={mapContainer} style={{ width: '100%', height, borderRadius: '0.5rem' }} />;
 };
 
 export default InteractiveMap;

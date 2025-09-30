@@ -15,8 +15,10 @@ import {
 } from 'lucide-react';
 import { mockFishingZones, mockCatchRecords, mockWeatherData } from '@/lib/mockData';
 import InteractiveMap from '@/components/map/InteractiveMap';
+import { MapboxTokenInput, useMapboxToken } from '@/components/map/MapboxConfig';
 
 const GISMapping = () => {
+  const { token } = useMapboxToken();
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [mapLayer, setMapLayer] = useState<'zones' | 'catches' | 'weather'>('zones');
 
@@ -122,12 +124,16 @@ const GISMapping = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <InteractiveMap 
-              zones={mockFishingZones}
-              onZoneClick={setSelectedZone}
-              selectedZoneId={selectedZone}
-              height="500px"
-            />
+            {!token ? (
+              <MapboxTokenInput />
+            ) : (
+              <InteractiveMap 
+                zones={mockFishingZones}
+                onZoneClick={setSelectedZone}
+                selectedZoneId={selectedZone}
+                height="500px"
+              />
+            )}
           </CardContent>
         </Card>
 
