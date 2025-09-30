@@ -9,16 +9,16 @@ import {
   TrendingUp, 
   AlertTriangle, 
   Layers,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
   Filter,
   Download,
   RefreshCw
 } from 'lucide-react';
 import { mockFishingZones, mockCatchRecords, mockWeatherData } from '@/lib/mockData';
+import InteractiveMap from '@/components/map/InteractiveMap';
+import { MapboxTokenInput, useMapboxToken } from '@/components/map/MapboxConfig';
 
 const GISMapping = () => {
+  const { token } = useMapboxToken();
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [mapLayer, setMapLayer] = useState<'zones' | 'catches' | 'weather'>('zones');
 
@@ -117,141 +117,23 @@ const GISMapping = () => {
 
         {/* Interactive Map */}
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MapPin className="h-5 w-5" />
               <span>Interactive Map - Virac Waters</span>
             </CardTitle>
-            
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </div>
           </CardHeader>
           <CardContent>
-            {/* Enhanced Map Visualization */}
-            <div className="relative h-96 rounded-lg bg-gradient-to-br from-primary/5 via-primary-light/10 to-accent/5 border overflow-hidden">
-              {/* Water Pattern Background */}
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute inset-0 bg-gradient-radial from-primary/30 via-transparent to-primary/10"></div>
-                <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.1)_10px,rgba(255,255,255,0.1)_20px)]"></div>
-              </div>
-
-              {/* Fishing Zones */}
-              {mapLayer === 'zones' && mockFishingZones.map((zone, index) => {
-                const positions = [
-                  { top: '20%', left: '25%' },
-                  { top: '50%', right: '20%' },
-                  { bottom: '25%', left: '50%' }
-                ];
-                const position = positions[index] || positions[0];
-                const isSelected = selectedZone === zone.id;
-                
-                return (
-                  <div
-                    key={zone.id}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
-                    style={position}
-                    onClick={() => setSelectedZone(zone.id)}
-                  >
-                    {/* Zone Boundary */}
-                    <div className={`absolute -inset-8 border-2 border-dashed rounded-lg transition-all ${
-                      zone.status === 'optimal' ? 'border-success/60' :
-                      zone.status === 'good' ? 'border-primary/60' :
-                      zone.status === 'restricted' ? 'border-destructive/60' :
-                      'border-warning/60'
-                    } ${isSelected ? 'border-solid scale-110' : 'group-hover:border-solid'}`}></div>
-                    
-                    {/* Zone Marker */}
-                    <div className={`relative h-4 w-4 rounded-full animate-pulse ${
-                      zone.status === 'optimal' ? 'bg-success' :
-                      zone.status === 'good' ? 'bg-primary' :
-                      zone.status === 'restricted' ? 'bg-destructive' :
-                      'bg-warning'
-                    }`}>
-                      <div className={`absolute -inset-1 rounded-full opacity-30 ${
-                        zone.status === 'optimal' ? 'bg-success' :
-                        zone.status === 'good' ? 'bg-primary' :
-                        zone.status === 'restricted' ? 'bg-destructive' :
-                        'bg-warning'
-                      } animate-ping`}></div>
-                    </div>
-                    
-                    {/* Zone Label */}
-                    <div className={`absolute -top-10 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur rounded px-2 py-1 text-xs font-medium shadow-surface whitespace-nowrap transition-all ${
-                      isSelected ? 'scale-110 bg-primary text-primary-foreground' : 'group-hover:scale-105'
-                    }`}>
-                      {zone.name}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Catch Points */}
-              {mapLayer === 'catches' && mockCatchRecords.map((record, index) => {
-                const positions = [
-                  { top: '30%', left: '35%' },
-                  { top: '60%', right: '25%' },
-                  { bottom: '35%', left: '60%' }
-                ];
-                const position = positions[index] || positions[0];
-                
-                return (
-                  <div
-                    key={record.id}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
-                    style={position}
-                  >
-                    <div className="relative h-3 w-3 bg-accent-coral rounded-full">
-                      <div className="absolute -inset-1 bg-accent-coral-light rounded-full opacity-50 animate-pulse"></div>
-                    </div>
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur rounded px-2 py-1 text-xs shadow-surface opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      {record.totalWeight}kg - {record.species.join(', ')}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Map Legend */}
-              <div className="absolute top-4 right-4 bg-background/90 backdrop-blur rounded-lg p-3 shadow-surface">
-                <div className="text-xs font-medium text-foreground mb-2">Legend</div>
-                <div className="space-y-1">
-                  {mapLayer === 'zones' && (
-                    <>
-                      <div className="flex items-center space-x-2">
-                        <div className="h-2 w-2 bg-success rounded-full"></div>
-                        <span className="text-xs text-muted-foreground">Optimal</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="h-2 w-2 bg-primary rounded-full"></div>
-                        <span className="text-xs text-muted-foreground">Good</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="h-2 w-2 bg-warning rounded-full"></div>
-                        <span className="text-xs text-muted-foreground">Poor</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="h-2 w-2 bg-destructive rounded-full"></div>
-                        <span className="text-xs text-muted-foreground">Restricted</span>
-                      </div>
-                    </>
-                  )}
-                  {mapLayer === 'catches' && (
-                    <div className="flex items-center space-x-2">
-                      <div className="h-2 w-2 bg-accent-coral rounded-full"></div>
-                      <span className="text-xs text-muted-foreground">Catch Points</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            {!token ? (
+              <MapboxTokenInput />
+            ) : (
+              <InteractiveMap 
+                zones={mockFishingZones}
+                onZoneClick={setSelectedZone}
+                selectedZoneId={selectedZone}
+                height="500px"
+              />
+            )}
           </CardContent>
         </Card>
 
