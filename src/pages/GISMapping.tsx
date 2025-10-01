@@ -126,6 +126,8 @@ const GISMapping = () => {
               zones={mockFishingZones}
               onZoneClick={setSelectedZone}
               selectedZoneId={selectedZone}
+              showCatchPoints={mapLayer === 'catches'}
+              showWeatherData={mapLayer === 'weather'}
               height="500px"
             />
           </CardContent>
