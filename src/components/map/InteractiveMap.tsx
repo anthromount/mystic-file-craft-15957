@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { FishingZone } from '@/lib/mockData';
+import { FishingZone, CatchRecord, WeatherData } from '@/lib/mockData';
 
 // Fix for default marker icons in Leaflet
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -21,6 +21,12 @@ interface InteractiveMapProps {
   selectedZoneId?: string | null;
   showCatchPoints?: boolean;
   showWeatherData?: boolean;
+  catchRecords?: CatchRecord[];
+  onCatchClick?: (catchId: string) => void;
+  selectedCatchId?: string | null;
+  weatherData?: WeatherData[];
+  onWeatherClick?: (weatherId: string) => void;
+  selectedWeatherId?: string | null;
   height?: string;
 }
 
@@ -37,6 +43,12 @@ const InteractiveMap = ({
   selectedZoneId,
   showCatchPoints = false,
   showWeatherData = false,
+  catchRecords = [],
+  onCatchClick,
+  selectedCatchId,
+  weatherData = [],
+  onWeatherClick,
+  selectedWeatherId,
   height = '400px'
 }: InteractiveMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -140,48 +152,59 @@ const InteractiveMap = ({
     }
 
     // Show catch points layer
-    if (showCatchPoints) {
-      zones.forEach(zone => {
-        if (!map.current || zone.avgCatchRate === 0) return;
+    if (showCatchPoints && catchRecords.length > 0) {
+      catchRecords.forEach(record => {
+        if (!map.current) return;
 
-        // Create circle markers for catch hotspots
-        const heatIntensity = zone.avgCatchRate / 50; // Scale catch rate
-        const marker = L.circleMarker([zone.coordinates.lat, zone.coordinates.lng], {
-          radius: 8 + heatIntensity * 4,
-          fillColor: zone.avgCatchRate > 40 ? '#ef4444' : zone.avgCatchRate > 25 ? '#f59e0b' : '#22c55e',
-          color: '#fff',
-          weight: 2,
+        const isSelected = selectedCatchId === record.id;
+        const heatIntensity = record.totalWeight / 20; // Scale catch weight
+        const marker = L.circleMarker([record.coordinates.lat, record.coordinates.lng], {
+          radius: isSelected ? 12 : 8 + heatIntensity * 2,
+          fillColor: record.totalWeight > 15 ? '#ef4444' : record.totalWeight > 10 ? '#f59e0b' : '#22c55e',
+          color: isSelected ? '#0ea5e9' : '#fff',
+          weight: isSelected ? 3 : 2,
           opacity: 1,
-          fillOpacity: 0.7
+          fillOpacity: isSelected ? 0.9 : 0.7
         }).addTo(map.current);
 
         marker.bindPopup(`
           <div style="padding: 8px; font-family: system-ui, -apple-system, sans-serif;">
-            <strong style="font-size: 14px;">${zone.name}</strong><br/>
-            <span style="font-size: 12px; color: #666;">Catch Rate: ${zone.avgCatchRate} kg/trip</span><br/>
-            <span style="font-size: 12px; color: #666;">Species: ${zone.primarySpecies.join(', ')}</span>
+            <strong style="font-size: 14px;">${record.location}</strong><br/>
+            <span style="font-size: 12px; color: #666;">Catch: ${record.totalWeight} kg</span><br/>
+            <span style="font-size: 12px; color: #666;">Species: ${record.species.join(', ')}</span><br/>
+            <span style="font-size: 12px; color: #666;">Fisher: ${record.fisherName}</span>
           </div>
         `);
 
-        layersRef.current.set(`catch-${zone.id}`, marker);
+        marker.on('click', () => {
+          if (onCatchClick) {
+            onCatchClick(record.id);
+          }
+        });
+
+        layersRef.current.set(`catch-${record.id}`, marker);
       });
     }
 
     // Show weather data layer
-    if (showWeatherData) {
-      zones.forEach(zone => {
+    if (showWeatherData && weatherData.length > 0) {
+      weatherData.forEach(weather => {
         if (!map.current) return;
 
-        // Simulate weather overlay with colored circles
-        const weatherColor = zone.status === 'restricted' ? '#ef4444' : 
-                           zone.status === 'poor' ? '#f59e0b' : '#0ea5e9';
+        // Find corresponding zone for coordinates
+        const zone = zones.find(z => z.name.toLowerCase().includes(weather.location.toLowerCase().split(',')[0]));
+        if (!zone) return;
+
+        const isSelected = selectedWeatherId === weather.id;
+        const weatherColor = weather.condition === 'stormy' || weather.condition === 'rainy' ? '#ef4444' : 
+                           weather.condition === 'cloudy' ? '#f59e0b' : '#0ea5e9';
         
         const circle = L.circle([zone.coordinates.lat, zone.coordinates.lng], {
           color: weatherColor,
           fillColor: weatherColor,
-          fillOpacity: 0.15,
+          fillOpacity: isSelected ? 0.25 : 0.15,
           radius: 3000,
-          weight: 1,
+          weight: isSelected ? 2 : 1,
           dashArray: '5, 10'
         }).addTo(map.current);
 
@@ -189,17 +212,31 @@ const InteractiveMap = ({
           .addTo(map.current)
           .bindPopup(`
             <div style="padding: 8px; font-family: system-ui, -apple-system, sans-serif;">
-              <strong style="font-size: 14px;">${zone.name}</strong><br/>
-              <span style="font-size: 12px; color: #666;">Weather: ${zone.status === 'optimal' ? 'Clear' : zone.status === 'good' ? 'Partly Cloudy' : 'Poor Conditions'}</span><br/>
-              <span style="font-size: 12px; color: #666;">Wind: ${Math.floor(Math.random() * 20 + 5)} knots</span>
+              <strong style="font-size: 14px;">${weather.location}</strong><br/>
+              <span style="font-size: 12px; color: #666;">Condition: ${weather.condition}</span><br/>
+              <span style="font-size: 12px; color: #666;">Temp: ${weather.temperature}°C</span><br/>
+              <span style="font-size: 12px; color: #666;">Wind: ${weather.windSpeed} km/h ${weather.windDirection}</span><br/>
+              <span style="font-size: 12px; color: #666;">Waves: ${weather.waveHeight}m</span>
             </div>
           `);
 
-        layersRef.current.set(`weather-circle-${zone.id}`, circle);
-        layersRef.current.set(`weather-marker-${zone.id}`, marker);
+        marker.on('click', () => {
+          if (onWeatherClick) {
+            onWeatherClick(weather.id);
+          }
+        });
+
+        circle.on('click', () => {
+          if (onWeatherClick) {
+            onWeatherClick(weather.id);
+          }
+        });
+
+        layersRef.current.set(`weather-circle-${weather.id}`, circle);
+        layersRef.current.set(`weather-marker-${weather.id}`, marker);
       });
     }
-  }, [zones, onZoneClick, selectedZoneId, showCatchPoints, showWeatherData]);
+  }, [zones, onZoneClick, selectedZoneId, showCatchPoints, showWeatherData, catchRecords, onCatchClick, selectedCatchId, weatherData, onWeatherClick, selectedWeatherId]);
 
   return (
     <div 

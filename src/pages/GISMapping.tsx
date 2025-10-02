@@ -18,6 +18,8 @@ import InteractiveMap from '@/components/map/InteractiveMap';
 
 const GISMapping = () => {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const [selectedCatch, setSelectedCatch] = useState<string | null>(null);
+  const [selectedWeather, setSelectedWeather] = useState<string | null>(null);
   const [mapLayer, setMapLayer] = useState<'zones' | 'catches' | 'weather'>('zones');
 
   const getStatusColor = (status: string) => {
@@ -32,6 +34,14 @@ const GISMapping = () => {
 
   const selectedZoneData = selectedZone 
     ? mockFishingZones.find(zone => zone.id === selectedZone)
+    : null;
+
+  const selectedCatchData = selectedCatch
+    ? mockCatchRecords.find(record => record.id === selectedCatch)
+    : null;
+
+  const selectedWeatherData = selectedWeather
+    ? mockWeatherData.find(weather => weather.id === selectedWeather)
     : null;
 
   return (
@@ -117,10 +127,13 @@ const GISMapping = () => {
               {mapLayer === 'catches' && (
                 <>
                   <h4 className="font-medium text-sm text-muted-foreground">RECENT CATCH POINTS</h4>
-                  {mockCatchRecords.slice(0, 5).map((record) => (
+                  {mockCatchRecords.map((record) => (
                     <div
                       key={record.id}
-                      className="p-3 rounded-lg border hover:bg-accent/50 transition-all"
+                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-surface ${
+                        selectedCatch === record.id ? 'border-primary bg-primary/5' : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => setSelectedCatch(record.id)}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h5 className="font-medium text-sm text-foreground">{record.species.join(', ')}</h5>
@@ -141,7 +154,10 @@ const GISMapping = () => {
                   {mockWeatherData.map((weather) => (
                     <div
                       key={weather.id}
-                      className="p-3 rounded-lg border hover:bg-accent/50 transition-all"
+                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-surface ${
+                        selectedWeather === weather.id ? 'border-primary bg-primary/5' : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => setSelectedWeather(weather.id)}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h5 className="font-medium text-sm text-foreground">{weather.location}</h5>
@@ -175,18 +191,28 @@ const GISMapping = () => {
               selectedZoneId={selectedZone}
               showCatchPoints={mapLayer === 'catches'}
               showWeatherData={mapLayer === 'weather'}
+              catchRecords={mockCatchRecords}
+              onCatchClick={setSelectedCatch}
+              selectedCatchId={selectedCatch}
+              weatherData={mockWeatherData}
+              onWeatherClick={setSelectedWeather}
+              selectedWeatherId={selectedWeather}
               height="500px"
             />
           </CardContent>
         </Card>
 
-        {/* Zone Details Panel */}
+        {/* Details Panel */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Zone Details</CardTitle>
+            <CardTitle>
+              {mapLayer === 'zones' && 'Zone Details'}
+              {mapLayer === 'catches' && 'Catch Details'}
+              {mapLayer === 'weather' && 'Weather Details'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {selectedZoneData ? (
+            {mapLayer === 'zones' && selectedZoneData ? (
               <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold text-lg text-foreground">{selectedZoneData.name}</h3>
@@ -246,14 +272,151 @@ const GISMapping = () => {
                   Generate Zone Report
                 </Button>
               </div>
-            ) : (
+            ) : mapLayer === 'zones' ? (
               <div className="text-center py-8">
                 <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-sm text-muted-foreground">
                   Select a fishing zone on the map to view detailed information
                 </p>
               </div>
-            )}
+            ) : null}
+
+            {mapLayer === 'catches' && selectedCatchData ? (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg text-foreground">{selectedCatchData.location}</h3>
+                  <Badge variant="outline">{selectedCatchData.date}</Badge>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Fisher</label>
+                    <p className="text-sm text-foreground">{selectedCatchData.fisherName}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Coordinates</label>
+                    <p className="text-sm text-foreground">
+                      {selectedCatchData.coordinates.lat.toFixed(4)}°N, {selectedCatchData.coordinates.lng.toFixed(4)}°E
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Total Weight</label>
+                    <p className="text-lg font-semibold text-foreground">{selectedCatchData.totalWeight} kg</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Market Value</label>
+                    <p className="text-sm text-foreground">₱{selectedCatchData.marketValue.toLocaleString()}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Species Caught</label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedCatchData.species.map((species) => (
+                        <Badge key={species} variant="outline" className="text-xs">
+                          {species}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Gear Used</label>
+                    <p className="text-sm text-foreground">{selectedCatchData.gear}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Trip Duration</label>
+                    <p className="text-sm text-foreground">{selectedCatchData.tripDuration} hours</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Crew Size</label>
+                    <p className="text-sm text-foreground">{selectedCatchData.crewSize} persons</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Weather Conditions</label>
+                    <p className="text-sm text-foreground">{selectedCatchData.weatherConditions}</p>
+                  </div>
+                </div>
+
+                <Button className="w-full" size="sm">
+                  Generate Catch Report
+                </Button>
+              </div>
+            ) : mapLayer === 'catches' ? (
+              <div className="text-center py-8">
+                <Fish className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  Select a catch point on the map to view detailed information
+                </p>
+              </div>
+            ) : null}
+
+            {mapLayer === 'weather' && selectedWeatherData ? (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg text-foreground">{selectedWeatherData.location}</h3>
+                  <Badge variant="outline">{selectedWeatherData.date}</Badge>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Condition</label>
+                    <p className="text-lg font-semibold text-foreground capitalize">{selectedWeatherData.condition}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Temperature</label>
+                    <p className="text-sm text-foreground">{selectedWeatherData.temperature}°C</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Humidity</label>
+                    <p className="text-sm text-foreground">{selectedWeatherData.humidity}%</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Wind</label>
+                    <p className="text-sm text-foreground">{selectedWeatherData.windSpeed} km/h {selectedWeatherData.windDirection}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Wave Height</label>
+                    <p className="text-sm text-foreground">{selectedWeatherData.waveHeight} meters</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Visibility</label>
+                    <p className="text-sm text-foreground">{selectedWeatherData.visibility} km</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Pressure</label>
+                    <p className="text-sm text-foreground">{selectedWeatherData.pressure} hPa</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">UV Index</label>
+                    <p className="text-sm text-foreground">{selectedWeatherData.uvIndex}</p>
+                  </div>
+                </div>
+
+                <Button className="w-full" size="sm">
+                  Generate Weather Report
+                </Button>
+              </div>
+            ) : mapLayer === 'weather' ? (
+              <div className="text-center py-8">
+                <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  Select a weather point on the map to view detailed information
+                </p>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
