@@ -86,29 +86,76 @@ const GISMapping = () => {
               </TabsList>
             </Tabs>
 
-            {/* Zone List */}
+            {/* Layer Content */}
             <div className="space-y-2">
-              <h4 className="font-medium text-sm text-muted-foreground">FISHING ZONES</h4>
-              {mockFishingZones.map((zone) => (
-                <div
-                  key={zone.id}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-surface ${
-                    selectedZone === zone.id ? 'border-primary bg-primary/5' : 'hover:bg-accent/50'
-                  }`}
-                  onClick={() => setSelectedZone(zone.id)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-sm text-foreground">{zone.name}</h5>
-                    <Badge className={getStatusColor(zone.status)}>
-                      {zone.status}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    <div>Depth: {zone.depth}m</div>
-                    <div>Avg. Catch: {zone.avgCatchRate} kg/trip</div>
-                  </div>
-                </div>
-              ))}
+              {mapLayer === 'zones' && (
+                <>
+                  <h4 className="font-medium text-sm text-muted-foreground">FISHING ZONES</h4>
+                  {mockFishingZones.map((zone) => (
+                    <div
+                      key={zone.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-surface ${
+                        selectedZone === zone.id ? 'border-primary bg-primary/5' : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => setSelectedZone(zone.id)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium text-sm text-foreground">{zone.name}</h5>
+                        <Badge className={getStatusColor(zone.status)}>
+                          {zone.status}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        <div>Depth: {zone.depth}m</div>
+                        <div>Avg. Catch: {zone.avgCatchRate} kg/trip</div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {mapLayer === 'catches' && (
+                <>
+                  <h4 className="font-medium text-sm text-muted-foreground">RECENT CATCH POINTS</h4>
+                  {mockCatchRecords.slice(0, 5).map((record) => (
+                    <div
+                      key={record.id}
+                      className="p-3 rounded-lg border hover:bg-accent/50 transition-all"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium text-sm text-foreground">{record.species.join(', ')}</h5>
+                        <Badge variant="outline">{record.totalWeight} kg</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        <div>Date: {record.date}</div>
+                        <div>Fisher: {record.fisherName}</div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {mapLayer === 'weather' && (
+                <>
+                  <h4 className="font-medium text-sm text-muted-foreground">WEATHER CONDITIONS</h4>
+                  {mockWeatherData.map((weather) => (
+                    <div
+                      key={weather.id}
+                      className="p-3 rounded-lg border hover:bg-accent/50 transition-all"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium text-sm text-foreground">{weather.location}</h5>
+                        <Badge variant="outline">{weather.condition}</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        <div>Temp: {weather.temperature}°C</div>
+                        <div>Wind: {weather.windSpeed} km/h</div>
+                        <div>Waves: {weather.waveHeight}m</div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
