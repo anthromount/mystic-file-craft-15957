@@ -50,6 +50,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { mockFishers, type Fisher } from '@/lib/mockData';
+import Header from '@/components/layout/Header';
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,9 +113,11 @@ const UserManagement = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <>
+      <Header />
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">User Management</h1>
           <p className="text-muted-foreground">Manage fishers, researchers, and system users</p>
@@ -542,7 +545,8 @@ const UserManagement = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </>
   );
 };
 

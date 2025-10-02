@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { mockFishingZones, mockCatchRecords, mockWeatherData } from '@/lib/mockData';
 import InteractiveMap from '@/components/map/InteractiveMap';
+import Header from '@/components/layout/Header';
 
 const GISMapping = () => {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
@@ -45,9 +46,11 @@ const GISMapping = () => {
     : null;
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <>
+      <Header />
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">GIS Mapping System</h1>
           <p className="text-muted-foreground">Interactive mapping and spatial analysis for fishing zones</p>
@@ -420,7 +423,8 @@ const GISMapping = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

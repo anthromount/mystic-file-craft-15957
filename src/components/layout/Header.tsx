@@ -1,18 +1,21 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Waves, MapPin, BarChart3, Users, Settings } from 'lucide-react';
+import { Menu, X, Waves, MapPin, BarChart3, Users, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: 'Dashboard', href: '#', icon: BarChart3 },
-  { name: 'GIS Mapping', href: '#', icon: MapPin },
-  { name: 'Fisherfolk', href: '#', icon: Users },
-  { name: 'Analytics', href: '#', icon: BarChart3 },
-  { name: 'Settings', href: '#', icon: Settings },
+  { name: 'Dashboard', path: '/', icon: BarChart3 },
+  { name: 'GIS Mapping', path: '/gis-mapping', icon: MapPin },
+  { name: 'Fisherfolk', path: '/user-management', icon: Users },
+  { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+  { name: 'Data Collection', path: '/data-collection', icon: Database },
 ];
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -33,24 +36,19 @@ export default function Header() {
           <nav className="hidden md:flex items-center space-x-6">
             {navigation.map((item) => {
               const Icon = item.icon;
-              const isActive = item.href === '#' && window.location.pathname === '/';
+              const isActive = location.pathname === item.path;
               
               return (
                 <Button
                   key={item.name}
                   variant="ghost"
-                  className={`flex items-center space-x-2 transition-smooth ${
+                  className={cn(
+                    "flex items-center space-x-2 transition-smooth",
                     isActive 
                       ? 'text-primary bg-primary/10' 
                       : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  onClick={() => {
-                    if (item.name === 'Dashboard') window.location.href = '/';
-                    else if (item.name === 'GIS Mapping') window.location.href = '/gis-mapping';
-                    else if (item.name === 'Fisherfolk') window.location.href = '/user-management';
-                    else if (item.name === 'Analytics') window.location.href = '/analytics';
-                    else if (item.name === 'Settings') window.location.href = '/data-collection';
-                  }}
+                  )}
+                  onClick={() => navigate(item.path)}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.name}</span>
@@ -83,17 +81,18 @@ export default function Header() {
             <nav className="flex flex-col space-y-2">
               {navigation.map((item) => {
                 const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                
                 return (
                   <Button
                     key={item.name}
                     variant="ghost"
-                    className="justify-start space-x-2"
+                    className={cn(
+                      "justify-start space-x-2",
+                      isActive && "text-primary bg-primary/10"
+                    )}
                     onClick={() => {
-                      if (item.name === 'Dashboard') window.location.href = '/';
-                      else if (item.name === 'GIS Mapping') window.location.href = '/gis-mapping';
-                      else if (item.name === 'Fisherfolk') window.location.href = '/user-management';
-                      else if (item.name === 'Analytics') window.location.href = '/analytics';
-                      else if (item.name === 'Settings') window.location.href = '/data-collection';
+                      navigate(item.path);
                       setMobileMenuOpen(false);
                     }}
                   >

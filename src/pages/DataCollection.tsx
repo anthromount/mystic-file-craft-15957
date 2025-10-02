@@ -23,6 +23,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { mockFishers, mockFishingZones } from '@/lib/mockData';
+import Header from '@/components/layout/Header';
 
 const DataCollection = () => {
   const { toast } = useToast();
@@ -163,9 +164,11 @@ const DataCollection = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
+    <>
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">Data Collection Center</h1>
         <p className="text-muted-foreground">Record catch data, register fishers, and collect field observations</p>
       </div>
@@ -610,7 +613,8 @@ const DataCollection = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </>
   );
 };
 
