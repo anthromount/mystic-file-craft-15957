@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Waves, MapPin, BarChart3, Users, Database } from 'lucide-react';
+import { Menu, X, Waves, MapPin, BarChart3, Users, Database, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigation = [
@@ -14,8 +14,16 @@ const navigation = [
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [researchMode, setResearchMode] = useState(() => {
+    const saved = localStorage.getItem('researchMode');
+    return saved === 'true';
+  });
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('researchMode', researchMode.toString());
+  }, [researchMode]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -59,8 +67,14 @@ export default function Header() {
 
           {/* User Profile & Mobile Menu Button */}
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              Research Mode
+            <Button 
+              variant={researchMode ? "default" : "outline"}
+              size="sm" 
+              className="hidden sm:flex"
+              onClick={() => setResearchMode(!researchMode)}
+            >
+              <FlaskConical className="h-4 w-4" />
+              <span>Research Mode</span>
             </Button>
             
             {/* Mobile menu button */}
