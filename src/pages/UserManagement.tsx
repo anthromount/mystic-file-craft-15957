@@ -49,7 +49,7 @@ import {
   Fish,
   AlertTriangle
 } from 'lucide-react';
-import { mockFishers, type Fisher } from '@/lib/mockData';
+import { mockFishers, type Fisher, systemUsers } from '@/lib/mockData';
 import Header from '@/components/layout/Header';
 
 const UserManagement = () => {
@@ -80,37 +80,6 @@ const UserManagement = () => {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
-
-  // Mock system users (researchers, admins, etc.)
-  const systemUsers = [
-    {
-      id: '1',
-      name: 'Dr. Maria Santos',
-      email: 'maria.santos@fisheries.gov.ph',
-      role: 'Lead Researcher',
-      status: 'active',
-      lastLogin: '2024-09-29',
-      permissions: ['view_all', 'edit_data', 'manage_users']
-    },
-    {
-      id: '2',
-      name: 'Juan Dela Cruz',
-      email: 'juan.cruz@virac.gov.ph',
-      role: 'Data Collector',
-      status: 'active',
-      lastLogin: '2024-09-28',
-      permissions: ['view_data', 'edit_catches']
-    },
-    {
-      id: '3',
-      name: 'Admin User',
-      email: 'admin@fishdss.ph',
-      role: 'System Administrator',
-      status: 'active',
-      lastLogin: '2024-09-29',
-      permissions: ['full_access']
-    }
-  ];
 
   return (
     <>

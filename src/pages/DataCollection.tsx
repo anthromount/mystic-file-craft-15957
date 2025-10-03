@@ -22,7 +22,7 @@ import {
   Trash2,
   CheckCircle
 } from 'lucide-react';
-import { mockFishers, mockFishingZones } from '@/lib/mockData';
+import { mockFishers, mockFishingZones, commonSpecies, gearTypes, weatherConditions } from '@/lib/mockData';
 import Header from '@/components/layout/Header';
 
 const DataCollection = () => {
@@ -55,21 +55,6 @@ const DataCollection = () => {
 
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
   const [newSpecies, setNewSpecies] = useState('');
-
-  const commonSpecies = [
-    'Tuna', 'Mackerel', 'Sardines', 'Grouper', 'Snapper', 
-    'Parrotfish', 'Anchovies', 'Spanish Mackerel', 'Yellowfin Tuna',
-    'Skipjack Tuna', 'Mahi-mahi', 'Red Snapper'
-  ];
-
-  const gearTypes = [
-    'Hook and Line', 'Net', 'Small Net', 'Trawl', 'Spear Gun',
-    'Fish Trap', 'Long Line', 'Gill Net', 'Seine Net'
-  ];
-
-  const weatherConditions = [
-    'Excellent', 'Good', 'Fair', 'Poor', 'Stormy'
-  ];
 
   const handleSpeciesToggle = (species: string) => {
     setSelectedSpecies(prev => 

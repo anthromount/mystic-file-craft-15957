@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,10 +32,17 @@ import {
   PieChart as PieChartIcon,
   Activity
 } from 'lucide-react';
-import { getAnalytics, getSpeciesData, getMonthlyCatchTrends, mockFishers, mockCatchRecords } from '@/lib/mockData';
+import { getAnalytics, getSpeciesData, getMonthlyCatchTrends, mockFishers, mockCatchRecords, locationData, weeklyData } from '@/lib/mockData';
+import { FilterDialog } from '@/components/dialogs/FilterDialog';
+import { exportToCSV } from '@/lib/exportUtils';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/layout/Header';
 
 const Analytics = () => {
+  const { toast } = useToast();
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<any>({});
+  
   const analytics = getAnalytics();
   const speciesData = getSpeciesData();
   const monthlyTrends = getMonthlyCatchTrends();
@@ -49,20 +57,28 @@ const Analytics = () => {
     efficiency: Math.round((fisher.avgCatchPerTrip / 10) * 100)
   }));
 
-  // Catch by location data
-  const locationData = [
-    { location: 'Balite Bay', catches: 145, percentage: 45 },
-    { location: 'San Miguel', catches: 98, percentage: 30 },
-    { location: 'Carangay', catches: 82, percentage: 25 }
-  ];
+  const handleExport = () => {
+    exportToCSV(mockCatchRecords, 'analytics_data');
+    toast({
+      title: "Export Successful",
+      description: "Analytics data has been exported to CSV",
+    });
+  };
 
-  // Weekly catch trends
-  const weeklyData = [
-    { week: 'Week 1', catches: 285, revenue: 65000, trips: 42 },
-    { week: 'Week 2', catches: 312, revenue: 71000, trips: 45 },
-    { week: 'Week 3', catches: 298, revenue: 68000, trips: 41 },
-    { week: 'Week 4', catches: 325, revenue: 74000, trips: 48 }
-  ];
+  const handleRefresh = () => {
+    toast({
+      title: "Data Refreshed",
+      description: "Analytics data has been updated",
+    });
+  };
+
+  const handleApplyFilters = (newFilters: any) => {
+    setFilters(newFilters);
+    toast({
+      title: "Filters Applied",
+      description: "Data has been filtered based on your criteria",
+    });
+  };
 
   return (
     <>
@@ -76,15 +92,15 @@ const Analytics = () => {
         </div>
         
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setFilterOpen(true)}>
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -434,6 +450,13 @@ const Analytics = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <FilterDialog 
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApplyFilters={handleApplyFilters}
+        type="analytics"
+      />
       </div>
     </>
   );

@@ -3,6 +3,7 @@ import MetricCard from '@/components/dashboard/MetricCard';
 import WeatherAlert from '@/components/dashboard/WeatherAlert';
 import MapView from '@/components/dashboard/MapView';
 import RecentActivity from '@/components/dashboard/RecentActivity';
+import { dashboardWeatherData } from '@/lib/mockData';
 import { 
   Fish, 
   Users, 
@@ -13,19 +14,6 @@ import {
 } from 'lucide-react';
 
 const Index = () => {
-  // Mock data for the dashboard
-  const mockWeatherData = {
-    condition: 'cloudy' as const,
-    temperature: 28,
-    windSpeed: 12,
-    waveHeight: 1.2,
-    visibility: 8,
-    alert: {
-      level: 'moderate' as const,
-      message: 'Moderate winds expected in eastern waters. Small boats advised to stay near shore.'
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -88,7 +76,7 @@ const Index = () => {
 
         {/* Weather & Conditions */}
         <div className="mb-8">
-          <WeatherAlert weather={mockWeatherData} />
+          <WeatherAlert weather={dashboardWeatherData} />
         </div>
 
         {/* Main Dashboard Grid */}

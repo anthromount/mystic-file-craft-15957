@@ -538,3 +538,90 @@ export const getMonthlyCatchTrends = () => {
     { month: 'Sep', catches: 1190, revenue: 270000 }
   ];
 };
+
+// Location data for Analytics
+export const locationData = [
+  { location: 'Balite Bay', catches: 145, percentage: 45 },
+  { location: 'San Miguel', catches: 98, percentage: 30 },
+  { location: 'Carangay', catches: 82, percentage: 25 }
+];
+
+// Weekly catch trends
+export const weeklyData = [
+  { week: 'Week 1', catches: 285, revenue: 65000, trips: 42 },
+  { week: 'Week 2', catches: 312, revenue: 71000, trips: 45 },
+  { week: 'Week 3', catches: 298, revenue: 68000, trips: 41 },
+  { week: 'Week 4', catches: 325, revenue: 74000, trips: 48 }
+];
+
+// Common fish species for data collection
+export const commonSpecies = [
+  'Tuna', 'Mackerel', 'Sardines', 'Grouper', 'Snapper', 
+  'Parrotfish', 'Anchovies', 'Spanish Mackerel', 'Yellowfin Tuna',
+  'Skipjack Tuna', 'Mahi-mahi', 'Red Snapper'
+];
+
+// Fishing gear types
+export const gearTypes = [
+  'Hook and Line', 'Net', 'Small Net', 'Trawl', 'Spear Gun',
+  'Fish Trap', 'Long Line', 'Gill Net', 'Seine Net'
+];
+
+// Weather conditions for data collection
+export const weatherConditions = [
+  'Excellent', 'Good', 'Fair', 'Poor', 'Stormy'
+];
+
+// System users (researchers, admins, etc.)
+export interface SystemUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: 'active' | 'inactive';
+  lastLogin: string;
+  permissions: string[];
+}
+
+export const systemUsers: SystemUser[] = [
+  {
+    id: '1',
+    name: 'Dr. Maria Santos',
+    email: 'maria.santos@fisheries.gov.ph',
+    role: 'Lead Researcher',
+    status: 'active',
+    lastLogin: '2024-09-29',
+    permissions: ['view_all', 'edit_data', 'manage_users']
+  },
+  {
+    id: '2',
+    name: 'Juan Dela Cruz',
+    email: 'juan.cruz@virac.gov.ph',
+    role: 'Data Collector',
+    status: 'active',
+    lastLogin: '2024-09-28',
+    permissions: ['view_data', 'edit_catches']
+  },
+  {
+    id: '3',
+    name: 'Admin User',
+    email: 'admin@fishdss.ph',
+    role: 'System Administrator',
+    status: 'active',
+    lastLogin: '2024-09-29',
+    permissions: ['full_access']
+  }
+];
+
+// Dashboard weather data
+export const dashboardWeatherData = {
+  condition: 'cloudy' as const,
+  temperature: 28,
+  windSpeed: 12,
+  waveHeight: 1.2,
+  visibility: 8,
+  alert: {
+    level: 'moderate' as const,
+    message: 'Moderate winds expected in eastern waters. Small boats advised to stay near shore.'
+  }
+};

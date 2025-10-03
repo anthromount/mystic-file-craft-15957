@@ -14,10 +14,16 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { mockFishingZones, mockCatchRecords, mockWeatherData } from '@/lib/mockData';
+import { FilterDialog } from '@/components/dialogs/FilterDialog';
+import { exportToCSV, exportToJSON } from '@/lib/exportUtils';
+import { useToast } from '@/hooks/use-toast';
 import InteractiveMap from '@/components/map/InteractiveMap';
 import Header from '@/components/layout/Header';
 
 const GISMapping = () => {
+  const { toast } = useToast();
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<any>({});
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [selectedCatch, setSelectedCatch] = useState<string | null>(null);
   const [selectedWeather, setSelectedWeather] = useState<string | null>(null);
@@ -45,6 +51,32 @@ const GISMapping = () => {
     ? mockWeatherData.find(weather => weather.id === selectedWeather)
     : null;
 
+  const handleExport = () => {
+    const dataToExport = mapLayer === 'zones' ? mockFishingZones : 
+                         mapLayer === 'catches' ? mockCatchRecords : 
+                         mockWeatherData;
+    exportToCSV(dataToExport, `gis_${mapLayer}_data`);
+    toast({
+      title: "Export Successful",
+      description: `${mapLayer} data has been exported to CSV`,
+    });
+  };
+
+  const handleRefresh = () => {
+    toast({
+      title: "Data Refreshed",
+      description: "Map data has been updated",
+    });
+  };
+
+  const handleApplyFilters = (newFilters: any) => {
+    setFilters(newFilters);
+    toast({
+      title: "Filters Applied",
+      description: "Map data has been filtered based on your criteria",
+    });
+  };
+
   return (
     <>
       <Header />
@@ -57,15 +89,15 @@ const GISMapping = () => {
         </div>
         
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setFilterOpen(true)}>
             <Filter className="h-4 w-4 mr-2" />
             Filters
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -423,7 +455,14 @@ const GISMapping = () => {
           </CardContent>
         </Card>
       </div>
-      </div>
+      
+      <FilterDialog 
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApplyFilters={handleApplyFilters}
+        type="gis"
+      />
+    </div>
     </>
   );
 };
