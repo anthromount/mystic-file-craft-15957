@@ -130,7 +130,12 @@ export default function WeatherAlert({ weather, location = "Virac, Catanduanes" 
             </Badge>
           </div>
           
-          <Button variant="outline" size="sm" className="flex items-center space-x-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center space-x-1"
+            onClick={() => window.open('https://www.pagasa.dost.gov.ph/', '_blank')}
+          >
             <span>View Forecast</span>
             <ExternalLink className="h-3 w-3" />
           </Button>

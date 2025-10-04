@@ -7,8 +7,19 @@ import {
   TrendingDown, 
   Clock, 
   User,
-  MoreHorizontal 
+  MoreHorizontal,
+  RefreshCw,
+  FileDown,
+  CheckCheck
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 interface ActivityItem {
   id: string;
@@ -82,6 +93,29 @@ const priorityStyles = {
 };
 
 export default function RecentActivity() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleRefresh = () => {
+    toast({
+      title: "Activities refreshed",
+      description: "Latest activities have been loaded.",
+    });
+  };
+
+  const handleMarkAllRead = () => {
+    toast({
+      title: "All activities marked as read",
+    });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Exporting activities",
+      description: "Your activity report will download shortly.",
+    });
+  };
+
   return (
     <Card className="col-span-1">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -89,9 +123,27 @@ export default function RecentActivity() {
           <Clock className="h-5 w-5 text-primary" />
           <span>Recent Activity</span>
         </CardTitle>
-        <Button variant="ghost" size="sm">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleRefresh}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleMarkAllRead}>
+              <CheckCheck className="h-4 w-4 mr-2" />
+              Mark all as read
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExport}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
       <CardContent className="space-y-4">
         {mockActivities.map((activity) => {
@@ -159,7 +211,12 @@ export default function RecentActivity() {
         })}
         
         {/* View All Button */}
-        <Button variant="outline" size="sm" className="w-full mt-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full mt-4"
+          onClick={() => navigate('/analytics')}
+        >
           View All Activities
         </Button>
       </CardContent>

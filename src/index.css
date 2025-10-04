@@ -141,4 +141,13 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Ensure leaflet controls don't overlap with header */
+  .leaflet-control-container {
+    @apply relative z-10;
+  }
+  
+  .leaflet-pane {
+    @apply relative z-0;
+  }
 }

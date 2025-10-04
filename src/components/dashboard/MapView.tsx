@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { mockFishingZones } from '@/lib/mockData';
 import InteractiveMap from '@/components/map/InteractiveMap';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 const statusStyles = {
@@ -44,6 +45,7 @@ const statusStyles = {
 
 export default function MapView() {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   return (
     <Card className="col-span-1 md:col-span-2">
@@ -52,13 +54,18 @@ export default function MapView() {
           <MapPin className="h-5 w-5 text-primary" />
           <span>Fishing Zones - Virac Waters</span>
         </CardTitle>
-        <Button variant="outline" size="sm" className="flex items-center space-x-1">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center space-x-1"
+          onClick={() => navigate('/gis-mapping')}
+        >
           <Maximize2 className="h-3 w-3" />
           <span>Full Map</span>
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
+        <div className="mb-4 relative z-0">
           <InteractiveMap 
             zones={mockFishingZones}
             onZoneClick={setSelectedZone}
