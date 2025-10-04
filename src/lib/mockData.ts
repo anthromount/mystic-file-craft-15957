@@ -511,16 +511,20 @@ export const getAnalytics = () => {
 export const getSpeciesData = () => {
   const speciesCount: Record<string, number> = {};
   
+  // Count each species occurrence
   mockCatchRecords.forEach(record => {
     record.species.forEach(species => {
       speciesCount[species] = (speciesCount[species] || 0) + 1;
     });
   });
   
+  // Calculate total species occurrences for accurate percentage
+  const totalSpeciesOccurrences = Object.values(speciesCount).reduce((sum, count) => sum + count, 0);
+  
   return Object.entries(speciesCount).map(([species, count]) => ({
     species,
     count,
-    percentage: (count / mockCatchRecords.length * 100).toFixed(1)
+    percentage: ((count / totalSpeciesOccurrences) * 100).toFixed(1)
   }));
 };
 
