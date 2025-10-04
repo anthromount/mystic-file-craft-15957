@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   BarChart, 
   Bar, 
@@ -228,10 +229,34 @@ const Analytics = () => {
               </CardContent>
             </Card>
 
+            {/* Revenue Trends */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={monthlyTrends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `₱${Number(value).toLocaleString()}`} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="hsl(var(--success))" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--success))' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
             {/* Weekly Performance */}
             <Card>
               <CardHeader>
-                <CardTitle>Weekly Performance</CardTitle>
+                <CardTitle>Weekly Catch Performance</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -241,6 +266,26 @@ const Analytics = () => {
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="catches" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Weekly Trips */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly Trips & Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="week" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip />
+                    <Bar yAxisId="left" dataKey="trips" fill="hsl(var(--accent-coral))" radius={[4, 4, 0, 0]} />
+                    <Bar yAxisId="right" dataKey="revenue" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -308,22 +353,26 @@ const Analytics = () => {
               <CardHeader>
                 <CardTitle>Species Breakdown</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {speciesData.map((species, index) => (
-                  <div key={species.species} className="flex items-center justify-between p-3 bg-muted/10 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div 
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: pieColors[index % pieColors.length] }}
-                      ></div>
-                      <span className="font-medium text-foreground">{species.species}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-foreground">{species.count} records</div>
-                      <div className="text-sm text-muted-foreground">{species.percentage}%</div>
-                    </div>
+              <CardContent>
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="space-y-4">
+                    {speciesData.map((species, index) => (
+                      <div key={species.species} className="flex items-center justify-between p-3 bg-muted/10 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div 
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: pieColors[index % pieColors.length] }}
+                          ></div>
+                          <span className="font-medium text-foreground">{species.species}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-foreground">{species.count} records</div>
+                          <div className="text-sm text-muted-foreground">{species.percentage}%</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </ScrollArea>
               </CardContent>
             </Card>
           </div>
