@@ -27,7 +27,8 @@ import {
   Thermometer,
   Waves,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { mockFishers, mockFishingZones, commonSpecies, gearTypes, weatherConditions } from '@/lib/mockData';
 import Header from '@/components/layout/Header';
@@ -62,6 +63,8 @@ const DataCollection = () => {
 
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
   const [newSpecies, setNewSpecies] = useState('');
+  const [catchPhotos, setCatchPhotos] = useState<File[]>([]);
+  const [observationPhotos, setObservationPhotos] = useState<File[]>([]);
 
   const [observationData, setObservationData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -105,6 +108,42 @@ const DataCollection = () => {
     }
   };
 
+  const handleCatchPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const validFiles: File[] = [];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    Array.from(files).forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File Type",
+          description: `${file.name} is not an image file.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (file.size > maxSize) {
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 5MB limit.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    setCatchPhotos(prev => [...prev, ...validFiles]);
+  };
+
+  const removeCatchPhoto = (index: number) => {
+    setCatchPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleCatchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -122,14 +161,15 @@ const DataCollection = () => {
       ...catchData,
       species: selectedSpecies,
       totalWeight: parseFloat(catchData.totalWeight),
-      marketValue: parseFloat(catchData.marketValue)
+      marketValue: parseFloat(catchData.marketValue),
+      photos: catchPhotos
     };
 
     console.log('Catch data submitted:', formData);
     
     toast({
       title: "Catch Record Saved",
-      description: `Successfully recorded catch for ${mockFishers.find(f => f.id === catchData.fisherId)?.name}`,
+      description: `Successfully recorded catch for ${mockFishers.find(f => f.id === catchData.fisherId)?.name}${catchPhotos.length > 0 ? ` with ${catchPhotos.length} photo(s)` : ''}`,
     });
 
     // Reset form
@@ -149,6 +189,7 @@ const DataCollection = () => {
       notes: ''
     });
     setSelectedSpecies([]);
+    setCatchPhotos([]);
   };
 
   const handleFisherSubmit = (e: React.FormEvent) => {
@@ -182,6 +223,42 @@ const DataCollection = () => {
     });
   };
 
+  const handleObservationPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const validFiles: File[] = [];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    Array.from(files).forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File Type",
+          description: `${file.name} is not an image file.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (file.size > maxSize) {
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 5MB limit.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    setObservationPhotos(prev => [...prev, ...validFiles]);
+  };
+
+  const removeObservationPhoto = (index: number) => {
+    setObservationPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleObservationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -194,11 +271,16 @@ const DataCollection = () => {
       return;
     }
 
-    console.log('Observation data submitted:', observationData);
+    const formData = {
+      ...observationData,
+      photos: observationPhotos
+    };
+
+    console.log('Observation data submitted:', formData);
     
     toast({
       title: "Observation Recorded",
-      description: `Field observation successfully saved for ${observationData.location}`,
+      description: `Field observation successfully saved for ${observationData.location}${observationPhotos.length > 0 ? ` with ${observationPhotos.length} photo(s)` : ''}`,
     });
 
     // Reset form
@@ -225,6 +307,7 @@ const DataCollection = () => {
       fishBehavior: '',
       notes: ''
     });
+    setObservationPhotos([]);
   };
 
   return (
@@ -495,12 +578,50 @@ const DataCollection = () => {
                     <Label>Photo Evidence</Label>
                     <div className="mt-2 border-2 border-dashed border-border rounded-lg p-6 text-center">
                       <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground mb-2">Upload photos of catch</p>
-                      <Button type="button" variant="outline" size="sm">
+                      <p className="text-sm text-muted-foreground mb-2">Upload photos of catch (max 5MB per file)</p>
+                      <Input 
+                        id="catch-photo" 
+                        type="file" 
+                        accept="image/*"
+                        multiple
+                        onChange={handleCatchPhotoUpload}
+                        className="hidden"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => document.getElementById('catch-photo')?.click()}
+                      >
                         <Upload className="h-4 w-4 mr-2" />
                         Choose Files
                       </Button>
                     </div>
+                    
+                    {catchPhotos.length > 0 && (
+                      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {catchPhotos.map((photo, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={URL.createObjectURL(photo)} 
+                              alt={`Catch photo ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeCatchPhoto(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-1 truncate">{photo.name}</p>
+                            <p className="text-xs text-muted-foreground">{(photo.size / 1024).toFixed(1)} KB</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <Button type="submit" className="w-full">
@@ -987,12 +1108,50 @@ const DataCollection = () => {
                     <Label>Photo Documentation</Label>
                     <div className="mt-2 border-2 border-dashed border-border rounded-lg p-6 text-center">
                       <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground mb-2">Upload photos of environmental conditions</p>
-                      <Button type="button" variant="outline" size="sm">
+                      <p className="text-sm text-muted-foreground mb-2">Upload photos of environmental conditions (max 5MB per file)</p>
+                      <Input 
+                        id="observation-photo" 
+                        type="file" 
+                        accept="image/*"
+                        multiple
+                        onChange={handleObservationPhotoUpload}
+                        className="hidden"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => document.getElementById('observation-photo')?.click()}
+                      >
                         <Upload className="h-4 w-4 mr-2" />
                         Choose Files
                       </Button>
                     </div>
+                    
+                    {observationPhotos.length > 0 && (
+                      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {observationPhotos.map((photo, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={URL.createObjectURL(photo)} 
+                              alt={`Observation photo ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeObservationPhoto(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-1 truncate">{photo.name}</p>
+                            <p className="text-xs text-muted-foreground">{(photo.size / 1024).toFixed(1)} KB</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
