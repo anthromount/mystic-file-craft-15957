@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,15 +50,25 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { mockFishers, type Fisher, systemUsers } from '@/lib/mockData';
+import { storageService } from '@/lib/storageService';
 import Header from '@/components/layout/Header';
 
 const UserManagement = () => {
+  const [fishers, setFishers] = useState(storageService.getFishers());
+  const [users, setUsers] = useState(storageService.getSystemUsers());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<Fisher | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
 
+  // Initialize storage with mock data on first load
+  useEffect(() => {
+    storageService.initializeWithMockData(mockFishers, [], systemUsers);
+    setFishers(storageService.getFishers());
+    setUsers(storageService.getSystemUsers());
+  }, []);
+
   // Filter users based on search and status
-  const filteredFishers = mockFishers.filter(fisher => {
+  const filteredFishers = fishers.filter(fisher => {
     const matchesSearch = fisher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          fisher.barangay.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          fisher.licenseNumber.toLowerCase().includes(searchTerm.toLowerCase());
@@ -109,10 +119,10 @@ const UserManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Fishers</p>
-                <p className="text-2xl font-bold text-primary">{mockFishers.length}</p>
-              </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Fishers</p>
+              <p className="text-2xl font-bold text-primary">{fishers.length}</p>
+            </div>
               <Users className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
@@ -121,12 +131,12 @@ const UserManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Fishers</p>
-                <p className="text-2xl font-bold text-success">
-                  {mockFishers.filter(f => f.status === 'active').length}
-                </p>
-              </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Active Fishers</p>
+              <p className="text-2xl font-bold text-success">
+                {fishers.filter(f => f.status === 'active').length}
+              </p>
+            </div>
               <UserCheck className="h-8 w-8 text-success" />
             </div>
           </CardContent>
@@ -135,12 +145,12 @@ const UserManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Suspended</p>
-                <p className="text-2xl font-bold text-destructive">
-                  {mockFishers.filter(f => f.status === 'suspended').length}
-                </p>
-              </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Suspended</p>
+              <p className="text-2xl font-bold text-destructive">
+                {fishers.filter(f => f.status === 'suspended').length}
+              </p>
+            </div>
               <UserX className="h-8 w-8 text-destructive" />
             </div>
           </CardContent>
@@ -149,10 +159,10 @@ const UserManagement = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">System Users</p>
-                <p className="text-2xl font-bold text-primary">{systemUsers.length}</p>
-              </div>
+            <div>
+              <p className="text-sm text-muted-foreground">System Users</p>
+              <p className="text-2xl font-bold text-primary">{users.length}</p>
+            </div>
               <Shield className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
@@ -342,7 +352,7 @@ const UserManagement = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {systemUsers.map((user) => (
+                  {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">

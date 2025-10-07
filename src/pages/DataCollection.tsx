@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,11 +30,15 @@ import {
   AlertTriangle,
   X
 } from 'lucide-react';
-import { mockFishers, mockFishingZones, commonSpecies, gearTypes, weatherConditions } from '@/lib/mockData';
+import { mockFishers, mockFishingZones, commonSpecies, gearTypes, weatherConditions, mockCatchRecords, systemUsers } from '@/lib/mockData';
+import { storageService } from '@/lib/storageService';
 import Header from '@/components/layout/Header';
 
 const DataCollection = () => {
   const { toast } = useToast();
+  const [fishers, setFishers] = useState(storageService.getFishers());
+  const [todaySummary, setTodaySummary] = useState(storageService.getTodaySummary());
+  
   const [catchData, setCatchData] = useState({
     fisherId: '',
     date: new Date().toISOString().split('T')[0],
@@ -51,7 +55,15 @@ const DataCollection = () => {
     notes: ''
   });
 
-  const [fisherData, setFisherData] = useState({
+  const [fisherData, setFisherData] = useState<{
+    name: string;
+    barangay: string;
+    phone: string;
+    email: string;
+    boatType: string;
+    licenseNumber: string;
+    status: 'active' | 'inactive' | 'suspended';
+  }>({
     name: '',
     barangay: '',
     phone: '',
@@ -65,6 +77,13 @@ const DataCollection = () => {
   const [newSpecies, setNewSpecies] = useState('');
   const [catchPhotos, setCatchPhotos] = useState<File[]>([]);
   const [observationPhotos, setObservationPhotos] = useState<File[]>([]);
+
+  // Initialize storage with mock data on first load
+  useEffect(() => {
+    storageService.initializeWithMockData(mockFishers, mockCatchRecords, systemUsers);
+    setFishers(storageService.getFishers());
+    setTodaySummary(storageService.getTodaySummary());
+  }, []);
 
   const [observationData, setObservationData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -157,19 +176,25 @@ const DataCollection = () => {
       return;
     }
 
-    const formData = {
-      ...catchData,
+    // Save to local storage
+    const newRecord = storageService.addCatchRecord({
+      fisherId: catchData.fisherId,
+      date: catchData.date,
       species: selectedSpecies,
       totalWeight: parseFloat(catchData.totalWeight),
-      marketValue: parseFloat(catchData.marketValue),
-      photos: catchPhotos
-    };
+      marketValue: parseFloat(catchData.marketValue) || 0,
+      location: catchData.location,
+      gear: catchData.gear,
+      weatherConditions: catchData.weatherConditions,
+    });
 
-    console.log('Catch data submitted:', formData);
+    // Update local state
+    setFishers(storageService.getFishers());
+    setTodaySummary(storageService.getTodaySummary());
     
     toast({
       title: "Catch Record Saved",
-      description: `Successfully recorded catch for ${mockFishers.find(f => f.id === catchData.fisherId)?.name}${catchPhotos.length > 0 ? ` with ${catchPhotos.length} photo(s)` : ''}`,
+      description: `Successfully recorded catch for ${fishers.find(f => f.id === catchData.fisherId)?.name}${catchPhotos.length > 0 ? ` with ${catchPhotos.length} photo(s)` : ''}`,
     });
 
     // Reset form
@@ -204,7 +229,11 @@ const DataCollection = () => {
       return;
     }
 
-    console.log('Fisher data submitted:', fisherData);
+    // Save to local storage
+    const newFisher = storageService.addFisher(fisherData);
+    
+    // Update local state
+    setFishers(storageService.getFishers());
     
     toast({
       title: "Fisher Registered",
@@ -271,12 +300,11 @@ const DataCollection = () => {
       return;
     }
 
-    const formData = {
+    // Save to local storage
+    const newObservation = storageService.addFieldObservation({
       ...observationData,
       photos: observationPhotos
-    };
-
-    console.log('Observation data submitted:', formData);
+    });
     
     toast({
       title: "Observation Recorded",
@@ -357,7 +385,7 @@ const DataCollection = () => {
                           <SelectValue placeholder="Select fisher" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockFishers.map((fisher) => (
+                          {fishers.map((fisher) => (
                             <SelectItem key={fisher.id} value={fisher.id}>
                               {fisher.name} - {fisher.barangay}
                             </SelectItem>
@@ -639,36 +667,23 @@ const DataCollection = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center p-4 bg-primary/5 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">12</div>
+                  <div className="text-2xl font-bold text-primary">{todaySummary.catchRecords}</div>
                   <div className="text-sm text-muted-foreground">Reports Submitted</div>
                 </div>
                 
                 <div className="text-center p-4 bg-success/5 rounded-lg">
-                  <div className="text-2xl font-bold text-success">156.8 kg</div>
+                  <div className="text-2xl font-bold text-success">{todaySummary.totalWeight.toFixed(1)} kg</div>
                   <div className="text-sm text-muted-foreground">Total Catch</div>
                 </div>
                 
                 <div className="text-center p-4 bg-accent/5 rounded-lg">
-                  <div className="text-2xl font-bold text-accent-coral">₱34,250</div>
+                  <div className="text-2xl font-bold text-accent-coral">₱{todaySummary.totalValue.toLocaleString()}</div>
                   <div className="text-sm text-muted-foreground">Market Value</div>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm text-muted-foreground">TOP SPECIES TODAY</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Tuna</span>
-                      <span className="font-medium">45.2 kg</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Mackerel</span>
-                      <span className="font-medium">32.1 kg</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Sardines</span>
-                      <span className="font-medium">28.5 kg</span>
-                    </div>
-                  </div>
+                <div className="text-center p-4 bg-info/5 rounded-lg">
+                  <div className="text-2xl font-bold text-info">{todaySummary.activeFishers}</div>
+                  <div className="text-sm text-muted-foreground">Active Fishers</div>
                 </div>
               </CardContent>
             </Card>
