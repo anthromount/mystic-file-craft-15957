@@ -19,7 +19,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -32,7 +31,7 @@ import {
 import {
   Users,
   Search,
-  Filter,
+  Download,
   Plus,
   MoreHorizontal,
   Edit,
@@ -45,27 +44,70 @@ import {
   MapPin,
   Calendar,
   Activity,
-  TrendingUp,
   Fish,
-  AlertTriangle
 } from 'lucide-react';
-import { mockFishers, type Fisher, systemUsers } from '@/lib/mockData';
+import { mockFishers, type Fisher, type SystemUser, systemUsers } from '@/lib/mockData';
 import { storageService } from '@/lib/storageService';
+import { exportToCSV } from '@/lib/exportUtils';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/layout/Header';
+import AddFisherDialog from '@/components/dialogs/AddFisherDialog';
+import EditFisherDialog from '@/components/dialogs/EditFisherDialog';
+import EditSystemUserDialog from '@/components/dialogs/EditSystemUserDialog';
+import ManagePermissionsDialog from '@/components/dialogs/ManagePermissionsDialog';
 
 const UserManagement = () => {
+  const { toast } = useToast();
   const [fishers, setFishers] = useState(storageService.getFishers());
   const [users, setUsers] = useState(storageService.getSystemUsers());
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<Fisher | null>(null);
+  const [selectedFisher, setSelectedFisher] = useState<Fisher | null>(null);
+  const [editingFisher, setEditingFisher] = useState<Fisher | null>(null);
+  const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
+  const [managingPermissionsUser, setManagingPermissionsUser] = useState<SystemUser | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
+  const [isAddFisherOpen, setIsAddFisherOpen] = useState(false);
 
   // Initialize storage with mock data on first load
   useEffect(() => {
     storageService.initializeWithMockData(mockFishers, [], systemUsers);
+    refreshData();
+  }, []);
+
+  const refreshData = () => {
     setFishers(storageService.getFishers());
     setUsers(storageService.getSystemUsers());
-  }, []);
+  };
+
+  const handleExportFishers = () => {
+    exportToCSV(fishers, 'fishers_data');
+    toast({
+      title: 'Success',
+      description: 'Fisher data exported successfully',
+    });
+  };
+
+  const handleToggleFisherStatus = (fisher: Fisher) => {
+    const newStatus: Fisher['status'] = fisher.status === 'suspended' ? 'active' : 'suspended';
+    const updatedFisher: Fisher = { ...fisher, status: newStatus };
+    storageService.updateFisher(updatedFisher);
+    refreshData();
+    toast({
+      title: 'Success',
+      description: `Fisher ${newStatus === 'suspended' ? 'suspended' : 'activated'} successfully`,
+    });
+  };
+
+  const handleDeactivateUser = (user: SystemUser) => {
+    const newStatus: SystemUser['status'] = user.status === 'inactive' ? 'active' : 'inactive';
+    const updatedUser: SystemUser = { ...user, status: newStatus };
+    storageService.updateSystemUser(updatedUser);
+    refreshData();
+    toast({
+      title: 'Success',
+      description: `User ${newStatus === 'inactive' ? 'deactivated' : 'activated'} successfully`,
+    });
+  };
 
   // Filter users based on search and status
   const filteredFishers = fishers.filter(fisher => {
@@ -103,13 +145,13 @@ const UserManagement = () => {
         </div>
         
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Export Data
+          <Button variant="outline" size="sm" onClick={handleExportFishers}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Fishers
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setIsAddFisherOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add User
+            Add Fisher
           </Button>
         </div>
       </div>
@@ -309,18 +351,30 @@ const UserManagement = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => setSelectedUser(fisher)}>
+                            <DropdownMenuItem onClick={() => setSelectedFisher(fisher)}>
                               <Activity className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditingFisher(fisher)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Fisher
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Suspend
+                            <DropdownMenuItem 
+                              className={fisher.status === 'suspended' ? 'text-success' : 'text-destructive'}
+                              onClick={() => handleToggleFisherStatus(fisher)}
+                            >
+                              {fisher.status === 'suspended' ? (
+                                <>
+                                  <UserCheck className="h-4 w-4 mr-2" />
+                                  Activate
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Suspend
+                                </>
+                              )}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -402,18 +456,30 @@ const UserManagement = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditingUser(user)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit User
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setManagingPermissionsUser(user)}>
                               <Shield className="h-4 w-4 mr-2" />
                               Manage Permissions
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Deactivate
+                            <DropdownMenuItem 
+                              className={user.status === 'inactive' ? 'text-success' : 'text-destructive'}
+                              onClick={() => handleDeactivateUser(user)}
+                            >
+                              {user.status === 'inactive' ? (
+                                <>
+                                  <UserCheck className="h-4 w-4 mr-2" />
+                                  Activate
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Deactivate
+                                </>
+                              )}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -428,16 +494,16 @@ const UserManagement = () => {
       </Tabs>
 
       {/* Fisher Details Dialog */}
-      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+      <Dialog open={!!selectedFisher} onOpenChange={() => setSelectedFisher(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Fisher Details</DialogTitle>
             <DialogDescription>
-              Comprehensive information about {selectedUser?.name}
+              Comprehensive information about {selectedFisher?.name}
             </DialogDescription>
           </DialogHeader>
           
-          {selectedUser && (
+          {selectedFisher && (
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -446,20 +512,20 @@ const UserManagement = () => {
                   <div className="space-y-2">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-                      <p className="text-sm text-foreground">{selectedUser.name}</p>
+                      <p className="text-sm text-foreground">{selectedFisher.name}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Barangay</label>
-                      <p className="text-sm text-foreground">{selectedUser.barangay}</p>
+                      <p className="text-sm text-foreground">{selectedFisher.barangay}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                      <p className="text-sm text-foreground">{selectedUser.phone}</p>
+                      <p className="text-sm text-foreground">{selectedFisher.phone}</p>
                     </div>
-                    {selectedUser.email && (
+                    {selectedFisher.email && (
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">Email</label>
-                        <p className="text-sm text-foreground">{selectedUser.email}</p>
+                        <p className="text-sm text-foreground">{selectedFisher.email}</p>
                       </div>
                     )}
                   </div>
@@ -470,22 +536,22 @@ const UserManagement = () => {
                   <div className="space-y-2">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Boat Type</label>
-                      <p className="text-sm text-foreground">{selectedUser.boatType}</p>
+                      <p className="text-sm text-foreground">{selectedFisher.boatType}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">License Number</label>
-                      <p className="text-sm text-foreground">{selectedUser.licenseNumber}</p>
+                      <p className="text-sm text-foreground">{selectedFisher.licenseNumber}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Registration Date</label>
                       <p className="text-sm text-foreground">
-                        {new Date(selectedUser.registrationDate).toLocaleDateString()}
+                        {new Date(selectedFisher.registrationDate).toLocaleDateString()}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Status</label>
-                      <Badge className={getStatusColor(selectedUser.status)}>
-                        {selectedUser.status}
+                      <Badge className={getStatusColor(selectedFisher.status)}>
+                        {selectedFisher.status}
                       </Badge>
                     </div>
                   </div>
@@ -498,13 +564,13 @@ const UserManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-primary">{selectedUser.totalCatches}</div>
+                      <div className="text-2xl font-bold text-primary">{selectedFisher.totalCatches}</div>
                       <div className="text-sm text-muted-foreground">Total Catches</div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-success">{selectedUser.avgCatchPerTrip} kg</div>
+                      <div className="text-2xl font-bold text-success">{selectedFisher.avgCatchPerTrip} kg</div>
                       <div className="text-sm text-muted-foreground">Average per Trip</div>
                     </CardContent>
                   </Card>
@@ -512,10 +578,13 @@ const UserManagement = () => {
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setSelectedUser(null)}>
+                <Button variant="outline" onClick={() => setSelectedFisher(null)}>
                   Close
                 </Button>
-                <Button>
+                <Button onClick={() => {
+                  setEditingFisher(selectedFisher);
+                  setSelectedFisher(null);
+                }}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Fisher
                 </Button>
@@ -524,6 +593,34 @@ const UserManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add/Edit Dialogs */}
+      <AddFisherDialog 
+        open={isAddFisherOpen}
+        onOpenChange={setIsAddFisherOpen}
+        onFisherAdded={refreshData}
+      />
+      
+      <EditFisherDialog
+        fisher={editingFisher}
+        open={!!editingFisher}
+        onOpenChange={(open) => !open && setEditingFisher(null)}
+        onFisherUpdated={refreshData}
+      />
+
+      <EditSystemUserDialog
+        user={editingUser}
+        open={!!editingUser}
+        onOpenChange={(open) => !open && setEditingUser(null)}
+        onUserUpdated={refreshData}
+      />
+
+      <ManagePermissionsDialog
+        user={managingPermissionsUser}
+        open={!!managingPermissionsUser}
+        onOpenChange={(open) => !open && setManagingPermissionsUser(null)}
+        onPermissionsUpdated={refreshData}
+      />
       </div>
     </>
   );

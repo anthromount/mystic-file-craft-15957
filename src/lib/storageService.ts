@@ -79,11 +79,11 @@ class StorageService {
     return newFisher;
   }
 
-  updateFisher(id: string, updates: Partial<Fisher>): void {
+  updateFisher(fisher: Fisher): void {
     const fishers = this.getFishers();
-    const index = fishers.findIndex(f => f.id === id);
+    const index = fishers.findIndex(f => f.id === fisher.id);
     if (index !== -1) {
-      fishers[index] = { ...fishers[index], ...updates };
+      fishers[index] = fisher;
       this.saveFishers(fishers);
     }
   }
@@ -175,6 +175,15 @@ class StorageService {
 
   saveSystemUsers(users: SystemUser[]): void {
     this.setItem(STORAGE_KEYS.SYSTEM_USERS, users);
+  }
+
+  updateSystemUser(user: SystemUser): void {
+    const users = this.getSystemUsers();
+    const index = users.findIndex(u => u.id === user.id);
+    if (index !== -1) {
+      users[index] = user;
+      this.saveSystemUsers(users);
+    }
   }
 
   // Initialize with mock data if storage is empty
