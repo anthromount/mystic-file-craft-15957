@@ -242,7 +242,7 @@ const InteractiveMap = ({
     <div 
       ref={mapContainer} 
       style={{ height, width: '100%' }} 
-      className="rounded-lg overflow-hidden border border-border"
+      className="relative z-0 rounded-lg overflow-hidden border border-border"
     />
   );
 };
