@@ -1,3 +1,5 @@
+import { systemUsers } from './mockData';
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -8,15 +10,16 @@ export interface AuthUser {
 class AuthService {
   private readonly AUTH_KEY = 'fishdss_auth_user';
 
-  login(email: string, password: string): AuthUser | null {
-    // Simple authentication check - in a real app, this would call an API
-    // For demo purposes, accept any email with password "password"
-    if (password === 'password') {
+  login(email: string): AuthUser | null {
+    // Authenticate by email only against mock system users
+    const systemUser = systemUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (systemUser) {
       const user: AuthUser = {
-        id: `user_${Date.now()}`,
-        email,
-        name: email.split('@')[0],
-        role: 'Researcher'
+        id: systemUser.id,
+        email: systemUser.email,
+        name: systemUser.name,
+        role: systemUser.role
       };
       localStorage.setItem(this.AUTH_KEY, JSON.stringify(user));
       return user;

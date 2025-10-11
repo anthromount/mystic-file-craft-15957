@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,7 +27,7 @@ export default function Login() {
 
     // Simulate async login
     setTimeout(() => {
-      const user = authService.login(email, password);
+      const user = authService.login(email);
       
       if (user) {
         toast({
@@ -39,7 +38,7 @@ export default function Login() {
       } else {
         toast({
           title: 'Login failed',
-          description: 'Invalid email or password',
+          description: 'Email not found in system',
           variant: 'destructive',
         });
       }
@@ -76,20 +75,8 @@ export default function Login() {
                 required
                 disabled={isLoading}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
               <p className="text-xs text-muted-foreground">
-                Demo: Use any email with password "password"
+                Demo: Use registered system user emails
               </p>
             </div>
             <Button 

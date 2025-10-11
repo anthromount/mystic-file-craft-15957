@@ -138,23 +138,10 @@ const UserManagement = () => {
       <Header />
       <div className="container mx-auto px-4 py-8 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">User Management</h1>
           <p className="text-muted-foreground">Manage fishers, researchers, and system users</p>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={handleExportFishers}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Fishers
-          </Button>
-          <Button size="sm" onClick={() => setIsAddFisherOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Fisher
-          </Button>
-        </div>
-      </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -265,7 +252,13 @@ const UserManagement = () => {
           {/* Fishers Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Registered Fishers ({filteredFishers.length})</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Registered Fishers ({filteredFishers.length})</CardTitle>
+                <Button variant="outline" size="sm" onClick={handleExportFishers}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Fishers
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -391,7 +384,13 @@ const UserManagement = () => {
         <TabsContent value="system-users" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>System Users & Researchers</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>System Users & Researchers</CardTitle>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add User
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
