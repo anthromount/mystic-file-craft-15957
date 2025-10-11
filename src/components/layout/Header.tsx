@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Waves, MapPin, BarChart3, Users, Database, FlaskConical } from 'lucide-react';
+import { Menu, X, Waves, MapPin, BarChart3, Users, Database, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { authService } from '@/lib/authService';
+import { useToast } from '@/hooks/use-toast';
 
 const navigation = [
   { name: 'Dashboard', path: '/', icon: BarChart3 },
@@ -14,16 +16,18 @@ const navigation = [
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [researchMode, setResearchMode] = useState(() => {
-    const saved = localStorage.getItem('researchMode');
-    return saved === 'true';
-  });
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    localStorage.setItem('researchMode', researchMode.toString());
-  }, [researchMode]);
+  const handleLogout = () => {
+    authService.logout();
+    toast({
+      title: 'Logged out',
+      description: 'You have been successfully logged out.',
+    });
+    navigate('/login');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -65,16 +69,16 @@ export default function Header() {
             })}
           </nav>
 
-          {/* User Profile & Mobile Menu Button */}
+          {/* Logout & Mobile Menu Button */}
           <div className="flex items-center space-x-2">
             <Button 
-              variant={researchMode ? "default" : "outline"}
+              variant="outline"
               size="sm" 
-              className="hidden sm:flex"
-              onClick={() => setResearchMode(!researchMode)}
+              className="hidden sm:flex items-center space-x-2"
+              onClick={handleLogout}
             >
-              <FlaskConical className="h-4 w-4" />
-              <span>Research Mode</span>
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
             </Button>
             
             {/* Mobile menu button */}
@@ -115,6 +119,14 @@ export default function Header() {
                   </Button>
                 );
               })}
+              <Button
+                variant="ghost"
+                className="justify-start space-x-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
             </nav>
           </div>
         )}

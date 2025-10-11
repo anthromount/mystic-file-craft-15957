@@ -8,7 +8,9 @@ import GISMapping from "./pages/GISMapping";
 import DataCollection from "./pages/DataCollection";
 import Analytics from "./pages/Analytics";
 import UserManagement from "./pages/UserManagement";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -19,11 +21,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/gis-mapping" element={<GISMapping />} />
-          <Route path="/data-collection" element={<DataCollection />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/gis-mapping" element={<ProtectedRoute><GISMapping /></ProtectedRoute>} />
+          <Route path="/data-collection" element={<ProtectedRoute><DataCollection /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
